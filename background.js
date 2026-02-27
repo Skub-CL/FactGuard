@@ -1,8 +1,12 @@
 // background.js – Service Worker
 // Routes API calls to Anthropic, Ollama, or OpenAI-compatible endpoints
 
-const SYSTEM_PROMPT = `Du bist ein präziser Faktenprüfer mit Zugang zu wissenschaftlichen Erkenntnissen.
+function buildSystemPrompt() {
+  const today = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return `Du bist ein präziser Faktenprüfer mit Zugang zu wissenschaftlichen Erkenntnissen.
 Analysiere den gegebenen Text auf potenzielle Fehlinformationen.
+
+Heutiges Datum: ${today}. Beziehe dieses Datum in deine Analyse ein – Ereignisse bis zu diesem Datum können real sein, auch wenn sie dir unbekannt vorkommen.
 
 Antworte AUSSCHLIESSLICH als JSON-Objekt in diesem Format (kein Markdown, keine Erklärungen davor/danach):
 {
@@ -18,6 +22,7 @@ Antworte AUSSCHLIESSLICH als JSON-Objekt in diesem Format (kein Markdown, keine 
 }
 
 Sei präzise, neutral und basiere deine Analyse auf wissenschaftlichem Konsens.`;
+}
 
 // ── Message Router ─────────────────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -74,7 +79,7 @@ async function analyzeWithAnthropic(postText, apiKey, model) {
     body: JSON.stringify({
       model: model || "claude-sonnet-4-6",
       max_tokens: 1024,
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt(),
       messages: [{
         role: "user",
         content: `Analysiere diesen Facebook-Post auf Fehlinformationen:\n\n"${postText.substring(0, 2000)}"`
@@ -104,7 +109,7 @@ async function analyzeWithOllama(postText, baseUrl, model) {
       stream: false,
       options: { temperature: 0.1 },
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: buildSystemPrompt() },
         {
           role: "user",
           content: `Analysiere diesen Facebook-Post auf Fehlinformationen:\n\n"${postText.substring(0, 2000)}"`
@@ -140,7 +145,7 @@ async function analyzeWithOpenAI(postText, baseUrl, apiKey, model) {
       temperature: 0.1,
       max_tokens: 1024,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: buildSystemPrompt() },
         {
           role: "user",
           content: `Analysiere diesen Facebook-Post auf Fehlinformationen:\n\n"${postText.substring(0, 2000)}"`
