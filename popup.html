@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>FactGuard Einstellungen</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 340px;
+      background: #0f1117;
+      color: #e8eaf0;
+      font-family: 'IBM Plex Sans', system-ui, sans-serif;
+      font-size: 13px;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: #161b27;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-icon {
+      width: 30px; height: 30px;
+      background: rgba(59,130,246,0.15);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      color: #3b82f6; flex-shrink: 0;
+    }
+    .header h1 { font-size: 14px; font-weight: 600; }
+    .header p  { font-size: 11px; color: #7a8399; margin-top: 1px; }
+
+    /* ── Content ── */
+    .content { padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
+
+    /* ── Status indicator ── */
+    .status-indicator {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px;
+      background: #161b27; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #6b7280; flex-shrink: 0; transition: all 0.3s;
+    }
+    .status-dot.active  { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+    .status-dot.warning { background: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,0.4); }
+    .status-info { font-size: 11.5px; color: #7a8399; line-height: 1.4; }
+
+    /* ── Provider tabs ── */
+    .provider-tabs {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    }
+    .provider-tab {
+      padding: 8px 4px; border-radius: 8px; cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: #161b27; text-align: center;
+      transition: all 0.15s; display: flex; flex-direction: column;
+      align-items: center; gap: 4px;
+    }
+    .provider-tab:hover { border-color: rgba(59,130,246,0.4); }
+    .provider-tab.active {
+      background: rgba(59,130,246,0.12);
+      border-color: rgba(59,130,246,0.6);
+    }
+    .provider-tab .tab-icon { font-size: 18px; line-height: 1; }
+    .provider-tab .tab-name { font-size: 11px; font-weight: 600; color: #e8eaf0; }
+    .provider-tab .tab-desc { font-size: 10px; color: #7a8399; }
+    .provider-tab.active .tab-name { color: #3b82f6; }
+
+    /* ── Provider panels ── */
+    .provider-panel { display: none; flex-direction: column; gap: 10px; animation: fadein 0.2s ease; }
+    .provider-panel.active { display: flex; }
+    @keyframes fadein { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
+    /* ── Form fields ── */
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field-label {
+      font-size: 10.5px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: #7a8399;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    .field-input {
+      width: 100%; background: #161b27;
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 7px;
+      padding: 8px 10px; color: #e8eaf0;
+      font-family: 'IBM Plex Mono', monospace; font-size: 11.5px;
+      outline: none; transition: border-color 0.15s;
+    }
+    .field-input:focus { border-color: rgba(59,130,246,0.5); }
+    .field-hint { font-size: 10.5px; color: #4a5568; line-height: 1.5; }
+    .field-hint a { color: #3b82f6; text-decoration: none; }
+
+    /* ── Model presets ── */
+    .presets { display: flex; flex-wrap: wrap; gap: 5px; }
+    .preset-btn {
+      padding: 3px 8px; border-radius: 5px; cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: #1e2535; color: #7a8399;
+      font-size: 10.5px; font-family: 'IBM Plex Mono', monospace;
+      transition: all 0.12s;
+    }
+    .preset-btn:hover { border-color: rgba(59,130,246,0.5); color: #3b82f6; }
+
+    /* ── Test button ── */
+    .test-btn {
+      width: 100%; padding: 7px; border-radius: 7px; cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: #161b27; color: #7a8399;
+      font-size: 12px; font-family: 'IBM Plex Sans', system-ui, sans-serif;
+      font-weight: 500; transition: all 0.15s;
+    }
+    .test-btn:hover { border-color: rgba(59,130,246,0.4); color: #3b82f6; }
+    .test-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Test result ── */
+    .test-result {
+      padding: 8px 10px; border-radius: 7px; font-size: 11px;
+      line-height: 1.5; white-space: pre-line; display: none;
+    }
+    .test-result.ok  { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25); color: #22c55e; }
+    .test-result.err { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: rgba(255,255,255,0.06); }
+
+    /* ── Toggle ── */
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .toggle-label { font-size: 13px; color: #e8eaf0; }
+    .toggle-desc  { font-size: 11px; color: #7a8399; margin-top: 2px; }
+    .toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+    .toggle input { display: none; }
+    .toggle-track {
+      position: absolute; inset: 0; background: #1e2535; border-radius: 10px;
+      cursor: pointer; transition: background 0.2s;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .toggle-thumb {
+      position: absolute; width: 14px; height: 14px; background: #7a8399;
+      border-radius: 50%; top: 2px; left: 2px; transition: all 0.2s;
+    }
+    .toggle input:checked ~ .toggle-track { background: rgba(59,130,246,0.3); border-color: rgba(59,130,246,0.5); }
+    .toggle input:checked ~ .toggle-track .toggle-thumb { left: 18px; background: #3b82f6; }
+
+    /* ── Save button ── */
+    .save-btn {
+      width: 100%; padding: 9px; background: #3b82f6; border: none;
+      border-radius: 8px; color: white; font-size: 13px;
+      font-family: 'IBM Plex Sans', system-ui, sans-serif;
+      font-weight: 600; cursor: pointer; transition: background 0.15s;
+      letter-spacing: 0.02em;
+    }
+    .save-btn:hover { background: #2563eb; }
+
+    .save-status {
+      padding: 7px 12px; border-radius: 7px; font-size: 11.5px;
+      text-align: center; display: none;
+      background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #22c55e;
+    }
+
+    /* ── Footer ── */
+    .footer { padding: 8px 16px 12px; font-size: 10.5px; color: #2d3748; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        <path d="m9 12 2 2 4-4"/>
+      </svg>
+    </div>
+    <div>
+      <h1>FactGuard</h1>
+      <p>Einstellungen &amp; KI-Provider</p>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Status -->
+    <div class="status-indicator">
+      <div class="status-dot" id="status-dot"></div>
+      <div class="status-info" id="status-text">Nicht konfiguriert</div>
+    </div>
+
+    <!-- Provider Tabs -->
+    <div>
+      <div class="field-label" style="margin-bottom:8px">KI-Provider</div>
+      <div class="provider-tabs">
+        <div class="provider-tab active" data-provider="anthropic">
+          <span class="tab-icon">🤖</span>
+          <span class="tab-name">Anthropic</span>
+          <span class="tab-desc">Claude API</span>
+        </div>
+        <div class="provider-tab" data-provider="ollama">
+          <span class="tab-icon">🦙</span>
+          <span class="tab-name">Ollama</span>
+          <span class="tab-desc">Lokal &amp; privat</span>
+        </div>
+        <div class="provider-tab" data-provider="openai">
+          <span class="tab-icon">⚡</span>
+          <span class="tab-name">OpenAI</span>
+          <span class="tab-desc">kompatibel</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Anthropic Panel -->
+    <div class="provider-panel active" id="panel-anthropic">
+      <div class="field">
+        <div class="field-label">API-Key</div>
+        <input type="password" id="anthropic-key" class="field-input" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+        <div class="field-hint">
+          Key unter <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a> erstellen.
+          Wird nur lokal gespeichert.
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Modell</div>
+        <input type="text" id="anthropic-model" class="field-input" placeholder="claude-sonnet-4-6" spellcheck="false">
+        <div class="field-hint">Empfohlene Modelle:</div>
+        <div class="presets">
+          <button class="preset-btn" data-target="anthropic-model" data-value="claude-sonnet-4-6">Sonnet 4.6</button>
+          <button class="preset-btn" data-target="anthropic-model" data-value="claude-opus-4-6">Opus 4.6</button>
+          <button class="preset-btn" data-target="anthropic-model" data-value="claude-haiku-4-5-20251001">Haiku 4.5</button>
+        </div>
+      </div>
+      <button class="test-btn" id="test-anthropic">🔌 Verbindung testen</button>
+      <div class="test-result" id="test-result-anthropic"></div>
+    </div>
+
+    <!-- Ollama Panel -->
+    <div class="provider-panel" id="panel-ollama">
+      <div class="field">
+        <div class="field-label">Ollama URL</div>
+        <input type="text" id="ollama-url" class="field-input" placeholder="http://localhost:11434" spellcheck="false">
+        <div class="field-hint">Standard: <code>http://localhost:11434</code> — Starte Ollama mit <code>ollama serve</code></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Modell</div>
+        <input type="text" id="ollama-model" class="field-input" placeholder="llama3.1" spellcheck="false">
+        <div class="field-hint">Empfohlene Modelle für Faktenprüfung:</div>
+        <div class="presets" id="ollama-presets">
+          <button class="preset-btn" data-target="ollama-model" data-value="llama3.1">llama3.1</button>
+          <button class="preset-btn" data-target="ollama-model" data-value="llama3.1:70b">llama3.1:70b</button>
+          <button class="preset-btn" data-target="ollama-model" data-value="mistral">mistral</button>
+          <button class="preset-btn" data-target="ollama-model" data-value="mistral-nemo">mistral-nemo</button>
+          <button class="preset-btn" data-target="ollama-model" data-value="gemma3">gemma3</button>
+          <button class="preset-btn" data-target="ollama-model" data-value="qwen2.5">qwen2.5</button>
+          <button class="preset-btn" data-target="ollama-model" data-value="deepseek-r1">deepseek-r1</button>
+        </div>
+      </div>
+      <button class="test-btn" id="test-ollama">🔌 Verbindung testen</button>
+      <div class="test-result" id="test-result-ollama"></div>
+    </div>
+
+    <!-- OpenAI-compatible Panel -->
+    <div class="provider-panel" id="panel-openai">
+      <div class="field">
+        <div class="field-label">API Basis-URL</div>
+        <input type="text" id="openai-url" class="field-input" placeholder="https://api.openai.com/v1" spellcheck="false">
+        <div class="field-hint">Für lokale Dienste z.B. <code>http://localhost:1234/v1</code> (LM Studio)</div>
+        <div class="presets" style="margin-top:5px">
+          <button class="preset-btn" data-target="openai-url" data-value="https://api.openai.com/v1">OpenAI</button>
+          <button class="preset-btn" data-target="openai-url" data-value="http://localhost:1234/v1">LM Studio</button>
+          <button class="preset-btn" data-target="openai-url" data-value="http://localhost:11434/v1">Ollama (OAI)</button>
+          <button class="preset-btn" data-target="openai-url" data-value="https://openrouter.ai/api/v1">OpenRouter</button>
+          <button class="preset-btn" data-target="openai-url" data-value="https://api.groq.com/openai/v1">Groq</button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">API-Key <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional für lokale Dienste)</span></div>
+        <input type="password" id="openai-key" class="field-input" placeholder="sk-..." autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field">
+        <div class="field-label">Modell</div>
+        <input type="text" id="openai-model" class="field-input" placeholder="gpt-4o-mini" spellcheck="false">
+        <div class="presets" style="margin-top:5px">
+          <button class="preset-btn" data-target="openai-model" data-value="gpt-4o-mini">gpt-4o-mini</button>
+          <button class="preset-btn" data-target="openai-model" data-value="gpt-4o">gpt-4o</button>
+          <button class="preset-btn" data-target="openai-model" data-value="llama-3.1-70b-versatile">Groq Llama</button>
+          <button class="preset-btn" data-target="openai-model" data-value="google/gemma-3-27b-it">Gemma 3</button>
+        </div>
+      </div>
+      <button class="test-btn" id="test-openai">🔌 Verbindung testen</button>
+      <div class="test-result" id="test-result-openai"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Sidebar Toggle -->
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">Sidebar anzeigen</div>
+        <div class="toggle-desc">Sidebar auf Facebook einblenden</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="sidebar-toggle" checked>
+        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      </label>
+    </div>
+
+    <button class="save-btn" id="save-btn">Einstellungen speichern</button>
+    <div class="save-status" id="save-status">✓ Gespeichert</div>
+  </div>
+
+  <div class="footer">FactGuard v1.1 · Anthropic · Ollama · OpenAI-kompatibel</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
