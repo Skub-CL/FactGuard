@@ -110,9 +110,10 @@ document.addEventListener('DOMContentLoaded', () => {
       saveStatus.style.display = 'block';
       setTimeout(() => { saveStatus.style.display = 'none'; }, 2500);
 
-      // Propagate sidebar toggle to active Facebook tab
+      // Propagate sidebar toggle to active supported tab
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs[0]?.url?.includes('facebook.com')) {
+        const supportedSites = ['facebook.com', 'bild.de', 'nius.de'];
+        if (tabs[0]?.url && supportedSites.some(s => tabs[0].url.includes(s))) {
           chrome.tabs.sendMessage(tabs[0].id, {
             type: 'TOGGLE_SIDEBAR',
             visible: settings.sidebarVisible

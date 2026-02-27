@@ -1,4 +1,4 @@
-// content.js – Facebook Fake News Detector Content Script
+// content.js – FactGuard Content Script (Facebook, Bild.de, Nius.de)
 
 (function () {
   'use strict';
@@ -99,7 +99,7 @@
             </svg>
           </div>
           <p class="fg-idle-title">Bereit zur Analyse</p>
-          <p class="fg-idle-sub">Klicke auf den <strong>„Prüfen"</strong>-Button<br>unter einem Facebook-Post,<br>um ihn zu analysieren.</p>
+          <p class="fg-idle-sub">Klicke auf den <strong>„Prüfen"</strong>-Button<br>unter einem ${SITE === 'facebook' ? 'Facebook-Post' : 'Artikel'},<br>um ihn zu analysieren.</p>
           ${isConfigured(providerConfig) ? '' : '<div class="fg-warning">⚠️ Kein Provider konfiguriert.<br><a href="#" id="fg-open-settings">Einstellungen öffnen →</a></div>'}
         </div>
 
@@ -229,7 +229,7 @@
       debounceTimer = setTimeout(injectCheckButtons, 500);
     });
     observer.observe(document.body, { childList: true, subtree: true });
-    // Initial scans – Facebook loads content progressively
+    // Initial scans – content loads progressively
     setTimeout(injectCheckButtons, 1500);
     setTimeout(injectCheckButtons, 4000);
   }

@@ -82,7 +82,7 @@ async function analyzeWithAnthropic(postText, apiKey, model) {
       system: buildSystemPrompt(),
       messages: [{
         role: "user",
-        content: `Analysiere diesen Facebook-Post auf Fehlinformationen:\n\n"${postText.substring(0, 2000)}"`
+        content: `Analysiere diesen Text auf Fehlinformationen:\n\n"${postText.substring(0, 2000)}"`
       }]
     })
   });
@@ -112,7 +112,7 @@ async function analyzeWithOllama(postText, baseUrl, model) {
         { role: "system", content: buildSystemPrompt() },
         {
           role: "user",
-          content: `Analysiere diesen Facebook-Post auf Fehlinformationen:\n\n"${postText.substring(0, 2000)}"`
+          content: `Analysiere diesen Text auf Fehlinformationen:\n\n"${postText.substring(0, 2000)}"`
         }
       ]
     })
@@ -148,7 +148,7 @@ async function analyzeWithOpenAI(postText, baseUrl, apiKey, model) {
         { role: "system", content: buildSystemPrompt() },
         {
           role: "user",
-          content: `Analysiere diesen Facebook-Post auf Fehlinformationen:\n\n"${postText.substring(0, 2000)}"`
+          content: `Analysiere diesen Text auf Fehlinformationen:\n\n"${postText.substring(0, 2000)}"`
         }
       ]
     })
