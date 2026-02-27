@@ -216,48 +216,60 @@
 
   // ── Post Observer ──────────────────────────────────────────────────────
   function startPostObserver() {
+    let debounceTimer = null;
     const observer = new MutationObserver(() => {
-      injectCheckButtons();
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(injectCheckButtons, 500);
     });
     observer.observe(document.body, { childList: true, subtree: true });
-    // Initial scan
-    setTimeout(injectCheckButtons, 2000);
+    // Initial scans – Facebook loads content progressively
+    setTimeout(injectCheckButtons, 1500);
+    setTimeout(injectCheckButtons, 4000);
   }
 
   function injectCheckButtons() {
-    // Facebook post selectors (these change frequently – covering common patterns)
-    const postSelectors = [
-      '[data-pagelet*="FeedUnit"] [data-ad-rendering-role="story_message"]',
-      '[role="article"] [data-ad-rendering-role="story_message"]',
-      'div[data-ad-rendering-role="story_message"]',
-      '[role="article"] div[dir="auto"][style*="text-align"]',
-    ];
+    // Find all top-level feed articles. Nested articles (comment sections)
+    // are excluded by checking that no parent is also role="article".
+    document.querySelectorAll('[role="article"]').forEach(article => {
+      if (observedPosts.has(article)) return;
+      if (article.parentElement?.closest('[role="article"]')) return; // skip nested
 
-    postSelectors.forEach(selector => {
-      document.querySelectorAll(selector).forEach(el => {
-        const article = el.closest('[role="article"]');
-        if (!article || observedPosts.has(article)) return;
-        observedPosts.add(article);
+      const text = extractPostText(article);
+      if (!text || text.length < 30) return;
 
-        const text = extractPostText(article);
-        if (!text || text.length < 30) return;
-
-        injectButton(article, text);
-      });
+      observedPosts.add(article);
+      injectButton(article, text);
     });
   }
 
   function extractPostText(article) {
-    const textEl = article.querySelector('[data-ad-rendering-role="story_message"]')
-      || article.querySelector('div[dir="auto"]');
-    return textEl ? textEl.innerText.trim() : '';
+    // Try selectors from most to least specific; return the longest match
+    const candidates = [
+      '[data-ad-rendering-role="story_message"]',
+      '[data-ad-preview="message"]',
+      '[data-testid="post_message"]',
+      'div[dir="auto"]',
+    ];
+
+    let best = '';
+    for (const sel of candidates) {
+      article.querySelectorAll(sel).forEach(el => {
+        const t = el.innerText.trim();
+        if (t.length > best.length) best = t;
+      });
+      if (best.length > 30) break; // good enough
+    }
+    return best;
   }
 
   function injectButton(article, postText) {
-    // Find the action bar (Like, Comment, Share)
-    const actionBar = article.querySelector('[aria-label*="Reaktionen"]')?.closest('div')
-      || article.querySelector('[role="toolbar"]')
-      || article.querySelector('div[style*="border-top"]');
+    // Find the action bar (Like / Comment / Share row)
+    const actionBar =
+      article.querySelector('[role="toolbar"]') ||
+      article.querySelector('[aria-label*="Reaktion"]')?.closest('div') ||
+      article.querySelector('[aria-label*="Like"]')?.closest('div') ||
+      article.querySelector('[aria-label*="Gefällt"]')?.closest('div') ||
+      article.querySelector('div[style*="border-top"]');
 
     const btnWrap = document.createElement('div');
     btnWrap.className = 'fg-check-button-wrap';
