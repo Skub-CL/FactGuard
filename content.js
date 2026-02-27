@@ -10,6 +10,9 @@
   let analysisQueue = [];
   let isAnalyzing = false;
 
+  // ── Site Detection ─────────────────────────────────────────────────────
+  const SITE = location.hostname.includes('bild.de') ? 'bild' : 'facebook';
+
   // ── Init ───────────────────────────────────────────────────────────────
   // All provider config fields
   const CONFIG_KEYS = ['provider','apiKey','anthropicModel','ollamaUrl','ollamaModel','openaiUrl','openaiKey','openaiModel','sidebarVisible'];
@@ -20,7 +23,11 @@
     sidebarVisible  = data.sidebarVisible !== false;
     injectSidebar();
     if (sidebarVisible) showSidebar();
-    startPostObserver();
+    if (SITE === 'bild') {
+      startBildObserver();
+    } else {
+      startPostObserver();
+    }
   });
 
   chrome.storage.onChanged.addListener((changes) => {
@@ -401,6 +408,87 @@
     const d = document.createElement('div');
     d.appendChild(document.createTextNode(str));
     return d.innerHTML;
+  }
+
+  // ── Bild.de Integration ────────────────────────────────────────────────
+  function startBildObserver() {
+    injectBildButtons();
+
+    let debounceTimer = null;
+    const observer = new MutationObserver(() => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(injectBildButtons, 800);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  function injectBildButtons() {
+    // Artikel-Teaser auf Übersichtsseiten und einzelne Artikel
+    const containers = [
+      ...document.querySelectorAll('article'),
+      ...document.querySelectorAll('[class*="article"][class*="body"]'),
+      ...document.querySelectorAll('[class*="ArticleBody"]'),
+    ];
+
+    // Deduplizieren
+    const seen = new Set();
+    containers.forEach(el => {
+      const article = el.tagName === 'ARTICLE' ? el : el.closest('article') || el;
+      if (seen.has(article) || observedPosts.has(article)) return;
+      seen.add(article);
+
+      const text = extractBildText(article);
+      if (!text || text.length < 40) return;
+
+      observedPosts.add(article);
+      injectBildButton(article, text);
+    });
+  }
+
+  function extractBildText(article) {
+    const headlineEl =
+      article.querySelector('h1') ||
+      article.querySelector('h2') ||
+      article.querySelector('[class*="headline"]') ||
+      article.querySelector('[class*="Headline"]') ||
+      article.querySelector('[class*="title"]');
+
+    const headline = headlineEl?.innerText?.trim() || '';
+
+    // Fließtext: alle p-Tags, die nicht Navigation/Footer sind
+    const paragraphs = [...article.querySelectorAll('p')]
+      .map(p => p.innerText.trim())
+      .filter(t => t.length > 30)
+      .slice(0, 8)
+      .join(' ');
+
+    return [headline, paragraphs].filter(Boolean).join('\n\n').substring(0, 3000);
+  }
+
+  function injectBildButton(article, text) {
+    const btnWrap = document.createElement('div');
+    btnWrap.className = 'fg-check-button-wrap fg-bild-wrap';
+    btnWrap.innerHTML = `
+      <button class="fg-check-btn fg-bild-btn" title="Mit FactGuard prüfen">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
+        FactGuard prüfen
+      </button>
+    `;
+
+    // Button nach der Überschrift einfügen, sonst am Anfang des Artikels
+    const headline = article.querySelector('h1, h2, [class*="headline"], [class*="Headline"]');
+    if (headline) {
+      headline.insertAdjacentElement('afterend', btnWrap);
+    } else {
+      article.prepend(btnWrap);
+    }
+
+    btnWrap.querySelector('.fg-check-btn').addEventListener('click', () => {
+      queueAnalysis(text);
+    });
   }
 
 })();

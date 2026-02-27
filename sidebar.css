@@ -486,3 +486,16 @@
 .fg-check-btn svg {
   flex-shrink: 0;
 }
+
+/* ── Bild.de Button ── */
+.fg-bild-wrap {
+  padding: 10px 0 6px;
+}
+
+.fg-bild-btn {
+  padding: 7px 16px;
+  font-size: 13px;
+  border-width: 1.5px;
+  border-radius: 4px;
+  font-weight: 600;
+}
