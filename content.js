@@ -11,7 +11,7 @@
   let isAnalyzing = false;
 
   // ── Site Detection ─────────────────────────────────────────────────────
-  const SITE = location.hostname.includes('bild.de') ? 'bild' : 'facebook';
+  const SITE = location.hostname.includes('facebook.com') ? 'facebook' : 'news';
 
   // ── Init ───────────────────────────────────────────────────────────────
   // All provider config fields
@@ -23,7 +23,7 @@
     sidebarVisible  = data.sidebarVisible !== false;
     injectSidebar();
     if (sidebarVisible) showSidebar();
-    if (SITE === 'bild') {
+    if (SITE === 'news') {
       startBildObserver();
     } else {
       startPostObserver();

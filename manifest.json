@@ -10,6 +10,7 @@
   "host_permissions": [
     "https://www.facebook.com/*",
     "https://www.bild.de/*",
+    "https://www.nius.de/*",
     "https://api.anthropic.com/*",
     "http://localhost/*",
     "http://127.0.0.1/*",
@@ -20,7 +21,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.facebook.com/*", "https://www.bild.de/*"],
+      "matches": ["https://www.facebook.com/*", "https://www.bild.de/*", "https://www.nius.de/*"],
       "js": ["content.js"],
       "css": ["sidebar.css"],
       "run_at": "document_idle"
